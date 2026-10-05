@@ -36,6 +36,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
 #include <string.h>
+#include "driverlib/pwm.h"
 #ifdef DEBUG
 void
 __error__(char *pcFilename, uint32_t ui32Line)
@@ -140,17 +141,17 @@ void UART1IntHandler(void)
         case 1:
             // First character - BLUE
             GPIOPinWrite(GPIO_PORTF_BASE,
-                        GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
+                        GPIO_PIN_2 | GPIO_PIN_3,
                         GPIO_PIN_2);
 
             command[0] = inputChar;
             break;
 
         case 2:
-            // Second character - RED
+            // Second character - CYAN (RED is individual)
             GPIOPinWrite(GPIO_PORTF_BASE,
-                        GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
-                        GPIO_PIN_1);
+                        GPIO_PIN_2 | GPIO_PIN_3,
+                        GPIO_PIN_2 | GPIO_PIN_3); //turning on pin 2 and 3
 
             command[1] = inputChar;
             break;
@@ -158,7 +159,7 @@ void UART1IntHandler(void)
         case 0:
             // Third character - GREEN
             GPIOPinWrite(GPIO_PORTF_BASE,
-                        GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
+                        GPIO_PIN_2 | GPIO_PIN_3,
                         GPIO_PIN_3);
 
             command[2] = inputChar;
@@ -189,8 +190,33 @@ main(void)
 
     // ---- LED setup ----
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_3);
+    // ---- Remove GPIO_PIN_1 From initial setup/ move to PWM config ----
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_3);
+
+    // ----Red LED PWM setup ----
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM1);
+
+        // -- PWM Clock --
+        ROM_SysCtlPWMClockSet(SYSCTL_PWMDIV_64);
+
+        // -- Connect physical pin PF1 to the PWM module's PWM output #5 --
+        GPIOPinConfigure(GPIO_PF1_M1PWM5);
+        GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_1);
+
+        // 250 kHz / 250 = 1 kHz PWM
+        uint32_t pwmPeriod = 250;
+
+        PWMGenConfigure(PWM1_BASE, PWM_GEN_2, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
+        PWMGenPeriodSet(PWM1_BASE, PWM_GEN_2, pwmPeriod);
+
+        // Start RED LED at 50% duty cycle
+        PWMPulseWidthSet(PWM1_BASE, PWM_OUT_5, pwmPeriod / 2);    
+        // Enable PWM generator
+        PWMGenEnable(PWM1_BASE, PWM_GEN_2);
+
+        // Enable M1PWM5 output
+        PWMOutputState(PWM1_BASE, PWM_OUT_5_BIT, true);
 
     // ---- UART0 setup ----
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
