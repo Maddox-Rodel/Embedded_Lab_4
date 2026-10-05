@@ -97,6 +97,10 @@ void right(void)
 void startPWM(void)
 {
     pwmRunning = true;
+
+        // Turn BLUE and GREEN off
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, 0);
+
     UART1Send((uint8_t *)"PWM Started\r\n", sizeof("PWM Started\r\n")-1);
     UARTSend((uint8_t *)"PWM Started\r\n", sizeof("PWM Started\r\n")-1);
 }
@@ -306,12 +310,10 @@ while(1)
         }
 
         // Apply new duty cycle to RED LED
-        PWMPulseWidthSet(PWM1_BASE,
-                         PWM_OUT_5,
-                         duty);
+        PWMPulseWidthSet(PWM1_BASE, PWM_OUT_5, duty);
 
         // Controls how quickly brightness changes
-        SysCtlDelay(ROM_SysCtlClockGet() / 30);
+        SysCtlDelay(ROM_SysCtlClockGet() / 10);
     }
 }
 }
