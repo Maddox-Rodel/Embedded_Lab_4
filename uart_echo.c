@@ -48,7 +48,7 @@ uint32_t charCount = 0;
 
 // 250 kHz / 250 = 1 kHz PWM
 uint32_t pwmPeriod = 250;
-bool pwmRunning = false
+bool pwmRunning = false;
 
 char command [4];
 
