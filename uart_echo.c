@@ -46,6 +46,10 @@ __error__(char *pcFilename, uint32_t ui32Line)
 
 uint32_t charCount = 0;
 
+// 250 kHz / 250 = 1 kHz PWM
+uint32_t pwmPeriod = 250;
+bool pwmRunning = false
+
 char command [4];
 
 void UARTSend(const uint8_t *pui8Buffer, uint32_t ui32Count)
@@ -90,6 +94,13 @@ void right(void)
     UARTSend((uint8_t *)"Move Right\r\n", sizeof("Move Right\r\n")-1);
 }
 
+void startPWM(void)
+{
+    pwmRunning = true;
+    UART1Send((uint8_t *)"PWM Started\r\n", sizeof("PWM Started\r\n")-1);
+    UARTSend((uint8_t *)"PWM Started\r\n", sizeof("PWM Started\r\n")-1);
+}
+
 //Lookup Table
 typedef struct 
 {
@@ -103,7 +114,8 @@ commandEntry commandTable[] =
     {"FWD" , forward}, 
     {"BWD" , backward}, 
     {"LFT" , left}, 
-    {"RGT" , right}
+    {"RGT" , right},
+    {"PWM" , startPWM}
 };
 
 void UARTIntHandler(void)
@@ -166,7 +178,7 @@ void UART1IntHandler(void)
             command[3] = '\0';
 
             int i;
-            for(i = 0; i < 4; i++)
+            for(i = 0; i < 5; i++)
             {
                 if(strcmp(command, commandTable[i].command) == 0)
                 {
@@ -203,9 +215,6 @@ main(void)
         // -- Connect physical pin PF1 to the PWM module's PWM output #5 --
         GPIOPinConfigure(GPIO_PF1_M1PWM5);
         GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_1);
-
-        // 250 kHz / 250 = 1 kHz PWM
-        uint32_t pwmPeriod = 250;
 
         PWMGenConfigure(PWM1_BASE, PWM_GEN_2, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
         PWMGenPeriodSet(PWM1_BASE, PWM_GEN_2, pwmPeriod);
@@ -262,7 +271,47 @@ main(void)
     UART1Send((uint8_t *)"Please enter 3-letter commands from the Bluetooth Terminal:\r\n",
                sizeof("Please enter 3-letter commands from the Bluetooth Terminal:\r\n") - 1);
 
-    while(1)
+
+        uint32_t duty = pwmPeriod / 2;
+        bool increasing = true;
+
+while(1)
+{
+    if(pwmRunning)
     {
+        // Increase brightness
+        if(increasing)
+        {
+            duty += 5;
+
+            if(duty >= pwmPeriod - 1)
+            {
+                duty = pwmPeriod - 1;
+                increasing = false;
+            }
+        }
+
+        // Decrease brightness
+        else
+        {
+            if(duty > 5)
+            {
+                duty -= 5;
+            }
+            else
+            {
+                duty = 1;
+                increasing = true;
+            }
+        }
+
+        // Apply new duty cycle to RED LED
+        PWMPulseWidthSet(PWM1_BASE,
+                         PWM_OUT_5,
+                         duty);
+
+        // Controls how quickly brightness changes
+        SysCtlDelay(ROM_SysCtlClockGet() / 30);
     }
+}
 }
