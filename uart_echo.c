@@ -95,19 +95,9 @@ void GPIO_init(void)
     {
     }
 
-    // RED and BLUE remain normal GPIO outputs
-    //
-    // PF1 = RED
-    // PF2 = BLUE
-    //
-    // PF3 is GREEN and will be configured for PWM
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2);
 
-    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE,
-                              GPIO_PIN_1 | GPIO_PIN_2);
-
-    GPIOPinWrite(GPIO_PORTF_BASE,
-                 GPIO_PIN_1 | GPIO_PIN_2,
-                 0);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2, 0);
 }
 
 
@@ -134,17 +124,16 @@ void UART0_init(void)
 
     // UART0 baud/format
     ROM_UARTConfigSetExpClk(UART0_BASE,
-                            ROM_SysCtlClockGet(),
-                            115200,
-                            (UART_CONFIG_WLEN_8 |
-                             UART_CONFIG_STOP_ONE |
-                             UART_CONFIG_PAR_NONE));
+          ROM_SysCtlClockGet(),
+          115200,
+          (UART_CONFIG_WLEN_8 |
+          UART_CONFIG_STOP_ONE |
+          UART_CONFIG_PAR_NONE));
 
     // UART0 interrupt enable
     ROM_IntEnable(INT_UART0);
 
-    ROM_UARTIntEnable(UART0_BASE,
-                      UART_INT_RX | UART_INT_RT);
+    ROM_UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_RT);
 }
 
 
@@ -166,8 +155,7 @@ void UART1_init(void)
     GPIOPinConfigure(GPIO_PB0_U1RX);
     GPIOPinConfigure(GPIO_PB1_U1TX);
 
-    ROM_GPIOPinTypeUART(GPIO_PORTB_BASE,
-                        GPIO_PIN_0 | GPIO_PIN_1);
+    ROM_GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
     // UART1 baud/format
     ROM_UARTConfigSetExpClk(UART1_BASE,
@@ -203,43 +191,24 @@ void PWM_init(void)
     // PF3 alternate function is M1PWM7
     GPIOPinConfigure(GPIO_PF3_M1PWM7);
 
-    GPIOPinTypePWM(GPIO_PORTF_BASE,
-                   GPIO_PIN_3);
-
-    // Use a PWM frequency of approximately 1 kHz
-    //
-    // PWM Clock = 625,000 Hz
-    // PWM Frequency = 1,000 Hz
-    //
-    // Period = PWM Clock / PWM Frequency
-    //
-    // Period = 625000 / 1000 = 625
+    GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_3);
 
     pwmPeriod = 625;
 
     // M1PWM7 is controlled by PWM Generator 3
-    PWMGenConfigure(PWM1_BASE,
-                    PWM_GEN_3,
-                    PWM_GEN_MODE_DOWN);
+    PWMGenConfigure(PWM1_BASE, PWM_GEN_3, PWM_GEN_MODE_DOWN);
 
     // Set PWM period
-    PWMGenPeriodSet(PWM1_BASE,
-                    PWM_GEN_3,
-                    pwmPeriod);
+    PWMGenPeriodSet(PWM1_BASE, PWM_GEN_3, pwmPeriod);
 
     // Start GREEN LED at 50% duty cycle
-    PWMPulseWidthSet(PWM1_BASE,
-                     PWM_OUT_7,
-                     pwmPeriod / 2);
+    PWMPulseWidthSet(PWM1_BASE, PWM_OUT_7, pwmPeriod / 2);
 
     // Enable PWM output 7
-    PWMOutputState(PWM1_BASE,
-                   PWM_OUT_7_BIT,
-                   true);
+    PWMOutputState(PWM1_BASE, PWM_OUT_7_BIT, true);
 
     // Enable PWM Generator 3
-    PWMGenEnable(PWM1_BASE,
-                 PWM_GEN_3);
+    PWMGenEnable(PWM1_BASE, PWM_GEN_3);
 }
 
 
@@ -251,41 +220,29 @@ void PWM_init(void)
 
 void forward(void)
 {
-    UART1Send((uint8_t *)"Move Forward\r\n",
-              sizeof("Move Forward\r\n")-1);
+    UART1Send((uint8_t *)"Move Forward\r\n", sizeof("Move Forward\r\n")-1);
 
-    UARTSend((uint8_t *)"Move Forward\r\n",
-             sizeof("Move Forward\r\n")-1);
+    UARTSend((uint8_t *)"Move Forward\r\n", sizeof("Move Forward\r\n")-1);
 }
 
 
 void backward(void)
 {
-    UART1Send((uint8_t *)"Move Backwards\r\n",
-              sizeof("Move Backwards\r\n")-1);
-
-    UARTSend((uint8_t *)"Move Backwards\r\n",
-             sizeof("Move Backwards\r\n")-1);
+    UART1Send((uint8_t *)"Move Backwards\r\n", sizeof("Move Backwards\r\n")-1);
+    UARTSend((uint8_t *)"Move Backwards\r\n", sizeof("Move Backwards\r\n")-1); 
 }
-
 
 void left(void)
 {
-    UART1Send((uint8_t *)"Move Left\r\n",
-              sizeof("Move Left\r\n")-1);
-
-    UARTSend((uint8_t *)"Move Left\r\n",
-             sizeof("Move Left\r\n")-1);
+    UART1Send((uint8_t *)"Move Left\r\n", sizeof("Move Left\r\n")-1) 
+    UARTSend((uint8_t *)"Move Left\r\n", sizeof("Move Left\r\n")-1);
 }
 
 
 void right(void)
 {
-    UART1Send((uint8_t *)"Move Right\r\n",
-              sizeof("Move Right\r\n")-1);
-
-    UARTSend((uint8_t *)"Move Right\r\n",
-             sizeof("Move Right\r\n")-1);
+    UART1Send((uint8_t *)"Move Right\r\n", sizeof("Move Right\r\n")-1);
+    UARTSend((uint8_t *)"Move Right\r\n", sizeof("Move Right\r\n")-1);
 }
 
 
@@ -294,15 +251,10 @@ void startPWM(void)
     pwmRunning = true;
 
     // Turn RED and BLUE off
-    GPIOPinWrite(GPIO_PORTF_BASE,
-                 GPIO_PIN_1 | GPIO_PIN_2,
-                 0);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2, 0);
 
-    UART1Send((uint8_t *)"PWM Started\r\n",
-              sizeof("PWM Started\r\n")-1);
-
-    UARTSend((uint8_t *)"PWM Started\r\n",
-             sizeof("PWM Started\r\n")-1);
+    UART1Send((uint8_t *)"PWM Started\r\n", sizeof("PWM Started\r\n")-1)     
+    UARTSend((uint8_t *)"PWM Started\r\n", sizeof("PWM Started\r\n")-1);
 }
 
 
@@ -350,8 +302,7 @@ void UARTIntHandler(void)
     {
         inputChar = ROM_UARTCharGetNonBlocking(UART0_BASE);
 
-        ROM_UARTCharPutNonBlocking(UART0_BASE,
-                                   inputChar);
+        ROM_UARTCharPutNonBlocking(UART0_BASE, inputChar);
     }
 }
 
@@ -376,11 +327,9 @@ void UART1IntHandler(void)
     {
         inputChar = ROM_UARTCharGetNonBlocking(UART1_BASE);
 
-        ROM_UARTCharPutNonBlocking(UART1_BASE,
-                                   inputChar);
+        ROM_UARTCharPutNonBlocking(UART1_BASE, inputChar);
 
-        ROM_UARTCharPutNonBlocking(UART0_BASE,
-                                   inputChar);
+        ROM_UARTCharPutNonBlocking(UART0_BASE, inputChar);
 
         charCount++;
 
@@ -390,9 +339,7 @@ void UART1IntHandler(void)
             case 1:
 
                 // First character - BLUE
-                GPIOPinWrite(GPIO_PORTF_BASE,
-                             GPIO_PIN_1 | GPIO_PIN_2,
-                             GPIO_PIN_2);
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2, GPIO_PIN_2);
 
                 command[0] = inputChar;
 
@@ -402,9 +349,7 @@ void UART1IntHandler(void)
             case 2:
 
                 // Second character - RED
-                GPIOPinWrite(GPIO_PORTF_BASE,
-                             GPIO_PIN_1 | GPIO_PIN_2,
-                             GPIO_PIN_1);
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2, GPIO_PIN_1);
 
                 command[1] = inputChar;
 
@@ -413,14 +358,7 @@ void UART1IntHandler(void)
 
             case 0:
 
-                // Third character
-                //
-                // GREEN is now controlled by PWM,
-                // so turn RED and BLUE off instead.
-
-                GPIOPinWrite(GPIO_PORTF_BASE,
-                             GPIO_PIN_1 | GPIO_PIN_2,
-                             0);
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2, 0);
 
                 command[2] = inputChar;
 
@@ -467,10 +405,7 @@ main(void)
     // 400 MHz PLL / 2 / 5 = 40 MHz
     //-------------------------------------------------------------------------
 
-    ROM_SysCtlClockSet(SYSCTL_SYSDIV_5 |
-                       SYSCTL_USE_PLL |
-                       SYSCTL_OSC_MAIN |
-                       SYSCTL_XTAL_16MHZ);
+    ROM_SysCtlClockSet(SYSCTL_SYSDIV_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
 
     //-------------------------------------------------------------------------
@@ -495,12 +430,12 @@ main(void)
     //-------------------------------------------------------------------------
 
     UARTSend((uint8_t *)
-             "Please enter 3-letter commands from the Bluetooth Terminal:\r\n",
+             "Please enter 3-letter commands from the Bluetooth Terminal:\r\n", 
              sizeof("Please enter 3-letter commands from the Bluetooth Terminal:\r\n") - 1);
 
 
     UART1Send((uint8_t *)
-              "Please enter 3-letter commands from the Bluetooth Terminal:\r\n",
+              "Please enter 3-letter commands from the Bluetooth Terminal:\r\n", 
               sizeof("Please enter 3-letter commands from the Bluetooth Terminal:\r\n") - 1);
 
 
@@ -552,12 +487,8 @@ main(void)
                 }
             }
 
-
             // Configure PWM with new pulse width
-            PWMPulseWidthSet(PWM1_BASE,
-                             PWM_OUT_7,
-                             duty);
-
+            PWMPulseWidthSet(PWM1_BASE, PWM_OUT_7, duty);
 
             // Delay so brightness transition is visible
             SysCtlDelay(ROM_SysCtlClockGet() / 300);
