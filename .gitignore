@@ -4,6 +4,7 @@
 *.map
 *.out
 *.launch
+*.json
 
 # CCS build directories
 Debug/
